@@ -75,6 +75,12 @@ export class CompanionBehaviour {
       case 'SLEEPING':
         this._sleepSequence();
         break;
+      case 'BORED':
+        this.sequence = null;
+        this._travelTo(this.targetLocation);
+        this.flight.hoverAmplitude = 0.02;
+        this.entity.playEmote('sigh');
+        break;
       case 'RESTING':
         this.sequence = null;
         this._travelTo('BED');
@@ -83,6 +89,7 @@ export class CompanionBehaviour {
       case 'WAKING':
         this._wakeSequence();
         this.entity.playEmote('stretch');
+        this.entity.playEmote('shake', 1.5);
         break;
       case 'THINKING':
       case 'WORKING':
@@ -100,7 +107,7 @@ export class CompanionBehaviour {
         this.sequence = null;
         if (this.location !== 'CENTER' && this.targetLocation === 'CENTER') this._travelTo('CENTER');
         this.flight.hoverAmplitude = 0.026;
-        this.entity.playEmote('bounce');
+        this.entity.playEmote(Math.random() < 0.4 ? 'happy' : 'bounce');
         break;
       case 'IDLE':
         this.sequence = null;
@@ -255,14 +262,14 @@ export class CompanionBehaviour {
         this.idleEmoteTimer -= dt;
         if (this.idleEmoteTimer <= 0) {
           this.idleEmoteTimer = 7 + Math.random() * 9;
-          const pool = ['spin', 'stretch', 'wiggle', 'look', 'bounce', 'look'];
+          const pool = ['spin', 'stretch', 'wiggle', 'look', 'bounce', 'look', 'peek', 'happy', 'sigh'];
           entity.playEmote(pool[Math.floor(Math.random() * pool.length)]);
         }
       } else if (state === 'WORKING' || state === 'THINKING') {
         this.workEmoteTimer -= dt;
         if (this.workEmoteTimer <= 0) {
-          this.workEmoteTimer = 4 + Math.random() * 5;
-          entity.playEmote(Math.random() < 0.6 ? 'look' : 'nod');
+          this.workEmoteTimer = 3.5 + Math.random() * 4;
+          entity.playEmote(Math.random() < 0.5 ? 'scan' : Math.random() < 0.5 ? 'nod' : 'look');
         }
       }
     }

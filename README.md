@@ -110,11 +110,14 @@ legs — it hovers. It flies on cubic Bezier paths with acceleration,
 deceleration and damped rotation — it never teleports.
 
 It also has a life of its own: a per-state posture (leans in while working,
-head droops when resting, curls when asleep) plus one-shot emotes — spin,
-stretch-with-yawn, wiggle, nod, happy bounce and look-around — triggered on
-state changes and by an idle timer so it never feels frozen. Wake triggers a
-stretch, listening a nod, speaking a bounce. The F1 overlay has an emote row,
-and `window.__nex.emote('spin')` drives it from the console.
+head droops when resting, curls when asleep) plus a library of gestures — spin,
+stretch-with-yawn, wiggle, nod, bounce, look-around, head-shake, happy hop,
+sigh, screen-scan and curious peek — triggered on state changes and by idle and
+working timers so it never feels frozen. Waking stretches then shakes it awake
+with wide surprised eyes; listening earns a nod and micro-nods; speaking adds
+delighted happy-arc eyes; boredom sighs; asleep it breathes, curls and its eyes
+dart in REM flickers. It double-blinks sometimes. The F1 overlay has an emote
+row, and `window.__nex.emote('spin')` drives it from the console.
 
 States: `IDLE`, `BORED`, `THINKING`, `WORKING`, `RESTING`, `SLEEPING`,
 `WAKING`, `LISTENING`, `SPEAKING`.
@@ -217,7 +220,7 @@ the frame time is poor) and reports telemetry to `POST /api/state` every 5 s.
 ```bash
 python3 -m unittest discover -s tests -v   # backend: 33 tests
 node tests/geometry.test.mjs               # mesh winding / normals / bounds
-node tests/frontend.test.mjs               # 60 checks, whole app headless
+node tests/frontend.test.mjs               # 64 checks, whole app headless
 ```
 
 `tests/frontend.test.mjs` boots the real modules against a recording WebGL2

@@ -211,6 +211,9 @@ runFrames(240);
 /* --------------------------------------------------------- sleep + wake */
 
 section('poses and emotes');
+// Keep this section deterministic: spontaneous gestures would clobber the emotes.
+behaviour.idleEmoteTimer = 1e9;
+behaviour.workEmoteTimer = 1e9;
 apply({ currentState: 'WORKING', targetLocation: 'DESK' });
 runFrames(180);
 check(entity.poseInfo.lean > 0.1, 'leans in while working', `lean ${entity.poseInfo.lean.toFixed(2)}`);
@@ -232,6 +235,23 @@ check(entity.poseInfo.yawn > 0.3, 'stretch comes with a yawn', `yawn ${entity.po
 entity.playEmote('bounce');
 runFrames(12);
 check(entity.poseInfo.bounce > 0.02, 'happy bounce lifts the body', `bounce ${entity.poseInfo.bounce.toFixed(3)}`);
+
+entity.playEmote('happy');
+runFrames(36);
+check(entity.poseInfo.happy > 0.5, 'happy emote lights up the eyes', `happy ${entity.poseInfo.happy.toFixed(2)}`);
+
+const rollBase = entity.poseInfo.roll;
+entity.playEmote('shake');
+runFrames(33);
+check(Math.abs(entity.poseInfo.roll - rollBase) > 0.05, 'head shake rolls the body', `roll ${ (entity.poseInfo.roll - rollBase).toFixed(2)}`);
+runFrames(40);
+check(Math.abs(entity.poseInfo.roll - rollBase) < 0.02, 'shake settles back to neutral', `roll ${(entity.poseInfo.roll - rollBase).toFixed(3)}`);
+
+entity.playEmote('scan');
+const g0 = entity.poseInfo.gazeX;
+runFrames(36);
+const g1 = entity.poseInfo.gazeX;
+check(Math.abs(g1 - g0) > 0.3, 'scan sweeps the eyes across the screen', `gaze ${g0.toFixed(2)} -> ${g1.toFixed(2)}`);
 
 section('sleep and wake');
 apply({ currentState: 'RESTING', targetLocation: 'BED' });

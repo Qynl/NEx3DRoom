@@ -561,10 +561,14 @@ export function createFaceTexture(size = 256) {
     const blink = o.blink || 0;
     const openY = Math.max(0.04, open * sy * (1 - blink * 0.94));
 
-    const rx = size * 0.062 * sx * (1 + blink * 0.1);
-    const ry = size * 0.095 * openY;
+    const happy = o.happy || 0;
+    const surprised = o.surprised || 0;
+    const squint = o.squint || 0;
+    const openEff = openY * (1 - squint * 0.55);
+    const rx = size * 0.062 * sx * (1 + blink * 0.1) * (1 + surprised * 0.35);
+    const ry = size * 0.095 * Math.max(0.04, openEff) * (1 + surprised * 0.3);
 
-    if (openY < 0.16) {
+    if (openEff < 0.16) {
       // Dozing: closed eyes as soft downward arcs.
       ctx.lineWidth = size * 0.035;
       for (const s of [-1, 1]) {
@@ -572,20 +576,33 @@ export function createFaceTexture(size = 256) {
         ctx.arc(c + s * eyeX + gx, eyeY - size * 0.02, size * 0.062, Math.PI * 0.15, Math.PI * 0.85);
         ctx.stroke();
       }
+    } else if (happy > 0.5) {
+      // Delighted: eyes become upward arcs.
+      ctx.lineWidth = size * 0.045;
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.arc(c + s * eyeX + gx, eyeY + size * 0.03, size * 0.07, Math.PI * 1.15, Math.PI * 1.85);
+        ctx.stroke();
+      }
     } else {
       for (const s of [-1, 1]) oval(c + s * eyeX + gx, eyeY, rx, ry);
     }
 
-    // Mouth: a smile that opens into a rounded mouth while speaking.
+    // Mouth: smile -> open while speaking -> little "o" when surprised.
     const mouthY = c + size * 0.16 + gy * 0.5;
     const speak = o.speaking || 0;
-    if (speak > 0.12) {
+    if (surprised > 0.4) {
+      oval(c + gx * 0.5, mouthY, size * 0.045, size * 0.06 * surprised);
+    } else if (speak > 0.12) {
       const openM = size * 0.05 + speak * size * 0.05;
-      oval(c + gx * 0.5, mouthY, size * 0.055, openM);
+      const wide = happy > 0.5 ? 1.35 : 1;
+      oval(c + gx * 0.5, mouthY, size * 0.055 * wide, openM);
     } else {
       ctx.lineWidth = size * 0.042;
       ctx.beginPath();
-      ctx.arc(c + gx * 0.5, mouthY - size * 0.055, size * 0.115, Math.PI * 0.18, Math.PI * 0.82);
+      const r = size * 0.115 * (1 + happy * 0.25);
+      const y0 = mouthY - size * 0.055 - happy * size * 0.02;
+      ctx.arc(c + gx * 0.5, y0, r, Math.PI * (0.18 - happy * 0.06), Math.PI * (0.82 + happy * 0.06));
       ctx.stroke();
     }
     return canvas;

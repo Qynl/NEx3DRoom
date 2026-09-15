@@ -55,7 +55,10 @@ const POSTURES = {
   SPEAKING:  { lean: -0.02, roll: 0.0 },
 };
 
-const EMOTE_DURATIONS = { stretch: 1.8, spin: 1.5, wiggle: 1.0, nod: 0.9, bounce: 0.8, look: 2.2 };
+const EMOTE_DURATIONS = {
+  stretch: 1.8, spin: 1.5, wiggle: 1.0, nod: 0.9, bounce: 0.8, look: 2.2,
+  shake: 1.1, happy: 1.2, sigh: 1.6, scan: 2.4, peek: 1.4,
+};
 
 const smooth = (t) => t * t * (3 - 2 * t);
 
@@ -80,6 +83,31 @@ const EMOTES = {
   },
   look: (t, ep) => {
     ep.gaze = [Math.sin(t * Math.PI * 2) * 0.9, 0.1 + Math.sin(Math.PI * t) * 0.2];
+  },
+  // A damped side-to-side head shake (shaking off sleep, "nope").
+  shake: (t, ep) => { ep.roll += Math.sin(t * Math.PI * 3) * 0.22 * (1 - t); },
+  // Delighted: happy eyes + a double hop.
+  happy: (t, ep) => {
+    ep.happy = Math.sin(Math.PI * t);
+    ep.bounce += Math.abs(Math.sin(t * Math.PI * 2)) * 0.055;
+  },
+  // A deflating sigh: drop, droop, half-lidded eyes.
+  sigh: (t, ep) => {
+    const s = Math.sin(Math.PI * t);
+    ep.bounce -= s * 0.045;
+    ep.lean += s * 0.14;
+    ep.squint = s;
+  },
+  // Reading the screen: eyes sweep left-right with a slight focused lean.
+  scan: (t, ep) => {
+    const tri = t < 0.5 ? t * 2 : (1 - t) * 2;      // 0..1..0
+    ep.gaze = [(tri * 2 - 1) * 0.85, -0.08];
+    ep.lean += Math.sin(Math.PI * t) * 0.06;
+  },
+  // Curious peek: tilt in and look up.
+  peek: (t, ep) => {
+    ep.roll += Math.sin(Math.PI * t) * 0.16;
+    ep.gaze = [0.35, 0.45 * Math.sin(Math.PI * t)];
   },
 };
 
@@ -114,9 +142,13 @@ export class AiEntity {
     // Pose layer: a damped per-state attitude plus one-shot emotes.
     this.posture = { lean: 0, roll: 0 };
     this.emote = null;
-    this._emotePose = { spin: 0, lean: 0, roll: 0, bounce: 0, squash: 0, yawn: 0, gaze: null };
-    this.poseInfo = { emote: null, spin: 0, lean: 0, roll: 0, bounce: 0, yawn: 0 };
+    this.pendingEmote = null;
+    this._emotePose = { spin: 0, lean: 0, roll: 0, bounce: 0, squash: 0, yawn: 0, happy: 0, squint: 0, surprised: 0, gaze: null };
+    this.poseInfo = { emote: null, spin: 0, lean: 0, roll: 0, bounce: 0, yawn: 0, happy: 0, gazeX: 0 };
     this._fwd = v3(); this._upv = v3(); this._rgt = v3();
+    this.remTimer = 4 + Math.random() * 4;
+    this.rem = 0;
+    this.wakeSurprise = 0;
 
     this.matrix = m4identity(new Float32Array(16));
     this.local = m4identity(new Float32Array(16));
@@ -214,11 +246,12 @@ export class AiEntity {
     this.speakingLevel = clamp(level, 0, 1);
   }
 
-  /** Play a one-shot gesture: spin, stretch, wiggle, nod, bounce or look. */
-  playEmote(name) {
+  /** Play a one-shot gesture, optionally after a delay in seconds. */
+  playEmote(name, delay = 0) {
     const duration = EMOTE_DURATIONS[name];
     if (!duration) return false;
-    this.emote = { name, t: 0, duration };
+    if (delay > 0) this.pendingEmote = { name, at: this.time + delay };
+    else this.emote = { name, t: 0, duration };
     return true;
   }
 
@@ -243,11 +276,11 @@ export class AiEntity {
     // Blinking - rarer and slower when resting.
     this.blinkTimer -= dt * (this.settle > 0.5 ? 0.25 : 1);
     if (this.blinkTimer <= 0) {
-      this.blink = 1;
+      this.blink = Math.random() < 0.25 ? 2 : 1;   // sometimes a double blink
       this.blinkTimer = (2.6 + Math.random() * 4.4) / (1 - this.settle * 0.6);
     }
     this.blink = Math.max(0, this.blink - dt * 7.5);
-    const blinkShape = Math.sin(this.blink * Math.PI);
+    const blinkShape = Math.abs(Math.sin(this.blink * Math.PI));
 
     // Breathing / idle life.
     this.breath += dt * (this.settle > 0.5 ? 0.9 : 1.7);
@@ -272,19 +305,45 @@ export class AiEntity {
     this.posture.roll = lerp(this.posture.roll, attitude.roll, pk);
 
     const ep = this._emotePose;
-    ep.spin = ep.lean = ep.roll = ep.bounce = ep.squash = ep.yawn = 0;
+    ep.spin = ep.lean = ep.roll = ep.bounce = ep.squash = ep.yawn = ep.happy = ep.squint = ep.surprised = 0;
     ep.gaze = null;
+
+    // A delayed emote goes live when its time comes and nothing is playing.
+    if (this.pendingEmote && this.time >= this.pendingEmote.at && !this.emote) {
+      this.emote = { name: this.pendingEmote.name, t: 0, duration: EMOTE_DURATIONS[this.pendingEmote.name] };
+      this.pendingEmote = null;
+    }
     if (this.emote) {
       this.emote.t += dt / this.emote.duration;
       if (this.emote.t >= 1) this.emote = null;
       else EMOTES[this.emote.name](this.emote.t, ep);
     }
+
+    // State-driven mood: wide-eyed just after waking, delighted while talking.
+    ep.surprised = this.state === 'WAKING' ? clamp(0.9 - this.expr.eyeOpen * 1.2, 0, 1) : 0;
+    const speakHappy = this.state === 'SPEAKING' ? clamp(this.speakingLevel - 0.5, 0, 0.5) * 1.6 : 0;
+    ep.happy = Math.max(ep.happy, speakHappy);
+
+    // REM flicker while asleep: the eyes dart under the lids.
+    if (this.state === 'SLEEPING') {
+      this.remTimer -= dt;
+      if (this.remTimer <= 0) { this.rem = 0.5; this.remTimer = 5 + Math.random() * 6; }
+      this.rem = Math.max(0, this.rem - dt);
+      if (this.rem > 0 && !ep.gaze) {
+        ep.gaze = [Math.sin(this.time * 23) * 0.3, Math.cos(this.time * 19) * 0.2];
+      }
+    } else {
+      this.rem = 0;
+    }
+
     this.poseInfo.emote = this.emote ? this.emote.name : null;
     this.poseInfo.spin = ep.spin;
     this.poseInfo.lean = this.posture.lean + ep.lean;
     this.poseInfo.roll = this.posture.roll + ep.roll;
     this.poseInfo.bounce = ep.bounce;
     this.poseInfo.yawn = ep.yawn;
+    this.poseInfo.happy = ep.happy;
+    this.poseInfo.gazeX = ep.gaze ? ep.gaze[0] : this.gaze[0];
 
     // Orient the body: spin about up, lean about right, roll about forward.
     const fwd = this._fwd, upv = this._upv, rgt = this._rgt;
@@ -351,6 +410,9 @@ export class AiEntity {
         gazeY: gaze[1],
         blink: blinkShape,
         speaking: Math.max(speaking, ep.yawn * 0.8),
+        happy: ep.happy,
+        squint: ep.squint,
+        surprised: ep.surprised,
         glow: this.expr.glow,
         colour: this.eyeColour,
       });

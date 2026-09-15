@@ -7,7 +7,7 @@
 import { PLACES } from '../world/layout.js';
 
 const STATES = ['IDLE', 'BORED', 'LISTENING', 'THINKING', 'WORKING', 'SPEAKING', 'RESTING', 'SLEEPING', 'WAKING'];
-const EMOTES = ['spin', 'stretch', 'wiggle', 'nod', 'bounce', 'look'];
+const EMOTES = ['spin', 'stretch', 'wiggle', 'nod', 'bounce', 'look', 'shake', 'happy', 'sigh', 'scan', 'peek'];
 const VOICE_EVENTS = [
   'user_started_speaking',
   'user_finished_speaking',
