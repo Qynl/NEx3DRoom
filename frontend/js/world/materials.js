@@ -86,6 +86,41 @@ export function createMaterials(tex) {
     name: 'oak',
   };
 
+  M.marble = {
+    albedo: [1, 1, 1],
+    maps: { albedo: tex.marble.albedo, normal: tex.marble.normal, rough: tex.marble.rough },
+    roughness: 1.0,
+    metallic: 0,
+    uvScale: [1, 1],
+    normalScale: 0.4,
+    name: 'marble',
+  };
+
+  M.rattan = {
+    albedo: [1, 1, 1],
+    maps: { albedo: tex.rattan.albedo, normal: tex.rattan.normal, rough: tex.rattan.rough },
+    roughness: 1.0,
+    metallic: 0,
+    uvScale: [3, 3],
+    normalScale: 1.0,
+    cull: false,
+    name: 'rattan',
+  };
+
+  M.cork = { albedo: rgb('#b98d5e'), roughness: 0.85, metallic: 0, name: 'cork' };
+  M.jarGlass = {
+    albedo: rgb('#dfe9e6'),
+    roughness: 0.05,
+    metallic: 0,
+    opacity: 0.22,
+    blend: 'alpha',
+    depthWrite: false,
+    name: 'jarGlass',
+  };
+  M.jarHerb = { albedo: rgb('#5a713a'), roughness: 0.9, name: 'jarHerb' };
+  M.jarSalt = { albedo: rgb('#e9e4da'), roughness: 0.9, name: 'jarSalt' };
+  M.jarBerry = { albedo: rgb('#a33b2e'), roughness: 0.6, name: 'jarBerry' };
+
   /* --------------------------------------------------------------- fabric */
   const fabric = (colour, roughness = 0.9, scale = 2.2, maps = tex.weave) => ({
     albedo: rgb(colour),
@@ -244,25 +279,25 @@ export function createMaterials(tex) {
 
   /* ------------------------------------------------------------ AI entity */
   M.aiShell = {
-    albedo: rgb('#eef1f4'),
-    roughness: 0.18,
-    metallic: 0.08,
-    emissive: rgb('#9fe8ff'),
-    emissiveStrength: 0.12,
+    albedo: rgb('#f4f5f6'),
+    roughness: 0.14,
+    metallic: 0.05,
+    emissive: rgb('#ffd9ae'),
+    emissiveStrength: 0.05,
     name: 'aiShell',
   };
   M.aiFace = {
-    albedo: rgb('#07090c'),
-    roughness: 0.06,
-    metallic: 0.25,
-    emissive: rgb('#0a2733'),
-    emissiveStrength: 0.35,
+    albedo: rgb('#05070a'),
+    roughness: 0.05,
+    metallic: 0.3,
+    emissive: rgb('#1a0e05'),
+    emissiveStrength: 0.4,
     name: 'aiFace',
   };
   M.aiEye = {
-    albedo: rgb('#04070a'),
+    albedo: rgb('#0a0502'),
     roughness: 0.2,
-    emissive: rgb('#a8f0ff'),
+    emissive: rgb('#ffb066'),
     emissiveStrength: 3.2,
     name: 'aiEye',
   };

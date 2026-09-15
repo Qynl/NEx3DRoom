@@ -296,7 +296,8 @@ async function main() {
     lights.setAiLight(entity.eyeColour, 0.5 + entity.expr.glow * 0.35, 2.3);
     lights.update(dt, entity.position);
 
-    camera.focus(entity.position, busy ? 0.35 : 0.6);
+    // A gentle nod toward the AI, but the frame stays on the whole room.
+    camera.focus(entity.position, busy ? 0.1 : 0.18);
     camera.update(dt);
 
     const stats = renderer.render(camera, now / 1000);

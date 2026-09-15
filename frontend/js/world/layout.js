@@ -112,9 +112,15 @@ export const BED_APPROACH = {
   face: [0.2, -0.2, 0.4],
 };
 
+/**
+ * The default framing sits high in the +X/+Z corner (top-right of the room)
+ * looking down across the window and desk walls, so the whole room is visible
+ * at a glance instead of the camera hugging the AI.
+ */
 export const CAMERA_HOME = {
-  target: [-0.35, 1.12, -0.18],
-  yaw: 0.94,
-  pitch: 0.15,
-  distance: 3.0,
+  target: [-0.5, 0.8, -0.5],
+  yaw: 0.9,
+  pitch: 0.4,
+  distance: 3.95,
+  fov: (55 * Math.PI) / 180,
 };

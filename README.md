@@ -92,16 +92,22 @@ Raw WebGL2, forward-rendered PBR: GGX + Smith + Schlick, Karis env BRDF, up to
 regenerated only when the time of day changes, MSAA 4× into an RGBA16F target,
 quarter-resolution bloom, ACES tone mapping, vignette and film grain.
 
-The room is ~5.4 × 4.2 × 2.7 m with a desk, a bed, a sofa, a rug, plants, a
-window and real proportions. ~18,000 triangles and ~47 draw calls for the whole
-scene — geometry and lighting do the work, not particle spam.
+The room is ~5.4 × 4.2 × 2.7 m with a desk, a bed, a sofa, a rug, a window and
+real proportions, dressed warm and lived-in: open shelves with corked glass
+jars and trailing herbs, a woven rattan pendant, window-sill pots, a marble
+coffee table and a soft warm under-shelf glow. The default camera sits high in
+the top-right corner so the whole room reads at a glance. ~20,000 triangles and
+a few dozen draw calls — geometry, materials and lighting do the work, not
+particle spam.
 
 ### The companion
 
-A ceramic shell with a glossy dark face cap, two emissive geometric eyes that
-blink and track, a tilting ring, two orbiting satellites, voice-reactive bars
-and an additive aura. No humanoid body. It flies on cubic Bezier paths with
-acceleration, deceleration and damped rotation — it never teleports.
+A glossy white egg head with a dark glass visor, two warm amber oval eyes and a
+smile drawn on a tiny glowing screen-canvas, little ear pods and a rounded body
+pod, wrapped in a soft additive aura. It blinks, looks around, talks, dozes and
+wakes; the face is parameter-driven so every state reads clearly. No arms, no
+legs — it hovers. It flies on cubic Bezier paths with acceleration,
+deceleration and damped rotation — it never teleports.
 
 States: `IDLE`, `BORED`, `THINKING`, `WORKING`, `RESTING`, `SLEEPING`,
 `WAKING`, `LISTENING`, `SPEAKING`.

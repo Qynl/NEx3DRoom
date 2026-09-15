@@ -27,6 +27,8 @@ export function buildFurniture(builder, M) {
   buildShelving(builder, M);
   buildFloorLamp(builder, M, refs);
   buildBigPlant(builder, M);
+  buildShelfDecor(builder, M, refs);
+  buildWindowHerbs(builder, M);
   buildContactShadows(builder, M);
   return refs;
 }
@@ -304,7 +306,7 @@ function buildSofa(builder, M) {
 
 function buildCoffeeTable(builder, M) {
   const { centerX: cx, centerZ: cz, width, depth, height } = TABLE;
-  builder.add(roundedBoxGeometry(width, 0.04, depth, 0.016, 4), T(cx, height, cz), M.walnut, { tag: 'tableTop' });
+  builder.add(roundedBoxGeometry(width, 0.04, depth, 0.016, 4), T(cx, height, cz), M.marble, { tag: 'tableTop' });
   builder.add(roundedBoxGeometry(width - 0.2, 0.02, depth - 0.16, 0.008, 3), T(cx, 0.16, cz), M.walnut, { tag: 'tableShelf' });
 
   const legs = [];
@@ -318,6 +320,17 @@ function buildCoffeeTable(builder, M) {
   // Bowl, books, candle.
   builder.add(latheGeometry([[0, 0.055], [0.05, 0.05], [0.11, 0.02], [0.125, 0], [0.115, 0.004], [0.098, 0.02], [0.045, 0.045], [0, 0.048]], 22),
     T(cx + 0.24, height + 0.02, cz + 0.02), M.ceramic, { tag: 'bowl' });
+  const tomatoes = [];
+  const tr = makeRandom(5);
+  for (let i = 0; i < 6; i++) {
+    const a = tr() * Math.PI * 2;
+    const rr = tr() * 0.06;
+    tomatoes.push(transformMesh(
+      sphereGeometry(0.028 + tr() * 0.01, 10, 8),
+      T(cx + 0.24 + Math.cos(a) * rr, height + 0.05 + (i % 2) * 0.02, cz + 0.02 + Math.sin(a) * rr)
+    ));
+  }
+  builder.add(mergeMeshes(tomatoes), I(), M.jarBerry, { tag: 'tomatoes', castShadow: false });
   builder.add(roundedBoxGeometry(0.24, 0.03, 0.18, 0.004, 2), T(cx - 0.24, height + 0.035, cz - 0.04, 0, 0.18, 0), M.bookC, { tag: 'tableBook1' });
   builder.add(roundedBoxGeometry(0.22, 0.026, 0.16, 0.004, 2), T(cx - 0.23, height + 0.063, cz - 0.03, 0, -0.1, 0), M.bookA, { tag: 'tableBook2' });
   builder.add(cylinderGeometry(0.036, 0.036, 0.1, 16), T(cx - 0.02, height + 0.07, cz + 0.14), M.ceramic, { tag: 'candle' });
@@ -439,6 +452,79 @@ function buildBigPlant(builder, M) {
   builder.add(mergeMeshes(stems), I(), M.leafDeep, { tag: 'plantStems', castShadow: false });
   builder.add(mergeMeshes(leaves), I(), M.leaf, { tag: 'plantLeaves' });
 }
+
+/* ------------------------------------------------- shelf jars + herbs ---- */
+
+function buildShelfDecor(builder, M, refs) {
+  const x = ROOM.minX + 0.13;
+  const z0 = -1.42, z1 = 0.14;
+  const cz = (z0 + z1) / 2;
+  const length = z1 - z0;
+
+  // Warm LED strip under the lower shelf (driven by the light rig).
+  refs.shelfStrip = builder.addDynamic(
+    boxGeometry(0.16, 0.012, length * 0.92),
+    { ...M.bulb, emissiveStrength: 2.0 },
+    { tag: 'shelfStrip', castShadow: false }
+  );
+  refs.shelfStrip.model = T(x, 1.502, cz);
+  refs.shelfStripPosition = [x + 0.06, 1.5, cz];
+
+  // Glass jars with cork lids + contents, like the concept shelf.
+  const jars = [
+    { z: z0 + 0.22, content: M.jarHerb, h: 0.16 },
+    { z: z0 + 0.42, content: M.jarSalt, h: 0.14 },
+    { z: z0 + 0.6, content: M.jarBerry, h: 0.15 },
+    { z: z1 - 0.5, content: M.jarHerb, h: 0.13 },
+  ];
+  for (const jar of jars) {
+    const r = 0.05;
+    builder.add(cylinderGeometry(r * 0.92, r, jar.h, 16), T(x, 1.536 + jar.h / 2, jar.z), M.jarGlass, { tag: 'jar', castShadow: false });
+    builder.add(cylinderGeometry(r * 0.8, r * 0.8, jar.h * 0.62, 14), T(x, 1.536 + jar.h * 0.34, jar.z), jar.content, { tag: 'jarFill', castShadow: false });
+    builder.add(cylinderGeometry(r * 0.86, r * 0.9, 0.03, 14), T(x, 1.536 + jar.h + 0.012, jar.z), M.cork, { tag: 'jarLid', castShadow: false });
+  }
+
+  // Small potted herbs trailing on the upper shelf.
+  const random = makeRandom(31);
+  for (const hz of [z0 + 0.28, z1 - 0.24]) {
+    builder.add(latheGeometry([[0, 0], [0.045, 0], [0.042, 0.004], [0.055, 0.07], [0.058, 0.075], [0.05, 0.073], [0.038, 0.005], [0, 0.005]], 16),
+      T(x, 1.956, hz), M.terracotta, { tag: 'shelfPot' });
+    const leaves = [];
+    for (let i = 0; i < 8; i++) {
+      const yaw = random() * Math.PI * 2;
+      const tilt = 0.4 + random() * 0.8;
+      leaves.push(transformMesh(
+        leafGeometry(0.06 + random() * 0.04, 0.04, 0.5, 5, 4),
+        T(x, 2.02, hz, yaw, tilt, 0)
+      ));
+    }
+    builder.add(mergeMeshes(leaves), I(), M.leaf, { tag: 'shelfHerb', castShadow: false });
+  }
+}
+
+/* ------------------------------------------------------ window-sill herbs */
+
+function buildWindowHerbs(builder, M) {
+  const { minZ } = ROOM;
+  const y = WINDOW_SILL_Y;
+  const random = makeRandom(77);
+  for (const hx of [-0.1, 0.55, 1.2]) {
+    builder.add(latheGeometry([[0, 0], [0.05, 0], [0.047, 0.004], [0.062, 0.085], [0.066, 0.09], [0.057, 0.088], [0.044, 0.006], [0, 0.006]], 16),
+      T(hx, y, minZ + 0.12), M.terracotta, { tag: 'sillPot' });
+    const leaves = [];
+    for (let i = 0; i < 9; i++) {
+      const yaw = random() * Math.PI * 2;
+      const tilt = 0.3 + random() * 0.7;
+      leaves.push(transformMesh(
+        leafGeometry(0.07 + random() * 0.05, 0.05, 0.5, 5, 4),
+        T(hx, y + 0.085, minZ + 0.12, yaw, tilt, 0)
+      ));
+    }
+    builder.add(mergeMeshes(leaves), I(), M.leaf, { tag: 'sillHerb', castShadow: false });
+  }
+}
+
+const WINDOW_SILL_Y = 0.82;
 
 /* ------------------------------------------------------ contact shadows -- */
 

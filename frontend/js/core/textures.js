@@ -448,6 +448,152 @@ export function createScreenTexture(width = 320, height = 200) {
 
 /* ------------------------------------------------------------ sky / IBL -- */
 
+/* -------------------------------------------------------------- marble --- */
+
+export function marbleTexture(opts = {}) {
+  const { size = 256, base = '#e8e4dd', vein = '#8f8a83', roughness = 0.22, seed = 21 } = opts;
+  const baseRgb = hexToRgb(base);
+  const veinRgb = hexToRgb(vein);
+  const albedoData = new Uint8ClampedArray(size * size * 4);
+  const height = new Float32Array(size * size);
+  const roughData = new Uint8ClampedArray(size * size * 4);
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const u = x / size, v = y / size;
+      // Ridged fbm gives the soft grey veins running through the stone.
+      const warp = fbm(u * 3 + 7.3, v * 3 + 2.1, 4, 3);
+      const ridge = Math.abs(Math.sin((u * 2.2 + v * 1.4 + warp * 1.6) * Math.PI * 2));
+      const veinAmt = Math.pow(1 - clamp(ridge * 1.6, 0, 1), 3.0);
+      const fine = fbm(u * 40 + seed, v * 40, 8, 3) * 0.5 + 0.5;
+      const mottle = 0.96 + fine * 0.05;
+      const t = clamp(veinAmt * (0.5 + fine * 0.5), 0, 1);
+      const i = (y * size + x) * 4;
+      albedoData[i] = clamp((baseRgb[0] * (1 - t) + veinRgb[0] * t) * mottle, 0, 255);
+      albedoData[i + 1] = clamp((baseRgb[1] * (1 - t) + veinRgb[1] * t) * mottle, 0, 255);
+      albedoData[i + 2] = clamp((baseRgb[2] * (1 - t) + veinRgb[2] * t) * mottle, 0, 255);
+      albedoData[i + 3] = 255;
+      height[y * size + x] = 1 - veinAmt * 0.6 + fine * 0.2;
+      const rough = clamp(roughness + veinAmt * 0.2 + fine * 0.05, 0.05, 1) * 255;
+      roughData[i] = rough; roughData[i + 1] = rough; roughData[i + 2] = rough; roughData[i + 3] = 255;
+    }
+  }
+  return {
+    albedo: putPixels(makeCanvas(size, size), albedoData),
+    rough: putPixels(makeCanvas(size, size), roughData),
+    normal: heightToNormal(height, size, 0.5),
+  };
+}
+
+/* -------------------------------------------------------------- rattan --- */
+
+export function rattanTexture(opts = {}) {
+  const { size = 256, base = '#b98a52', dark = '#7a5527', roughness = 0.7, seed = 9 } = opts;
+  const baseRgb = hexToRgb(base);
+  const darkRgb = hexToRgb(dark);
+  const albedoData = new Uint8ClampedArray(size * size * 4);
+  const height = new Float32Array(size * size);
+  const roughData = new Uint8ClampedArray(size * size * 4);
+  const weave = 10; // strands across
+  for (let y = 0; y < size; y++) {
+    for (let x = 0; x < size; x++) {
+      const u = x / size, v = y / size;
+      const a = Math.sin((u + v) * Math.PI * weave);
+      const b = Math.sin((u - v) * Math.PI * weave);
+      const strand = Math.max(a, b);
+      const over = a > b ? 1 : 0;
+      const gap = clamp(strand, 0, 1);
+      const fine = fbm(u * 60 + seed, v * 60, 8, 2) * 0.5 + 0.5;
+      const shade = 0.72 + gap * 0.3 + over * 0.06 + fine * 0.06;
+      const t = clamp(1 - gap, 0, 1) * 0.7;
+      const i = (y * size + x) * 4;
+      albedoData[i] = clamp((baseRgb[0] * (1 - t) + darkRgb[0] * t) * shade, 0, 255);
+      albedoData[i + 1] = clamp((baseRgb[1] * (1 - t) + darkRgb[1] * t) * shade, 0, 255);
+      albedoData[i + 2] = clamp((baseRgb[2] * (1 - t) + darkRgb[2] * t) * shade, 0, 255);
+      albedoData[i + 3] = 255;
+      height[y * size + x] = gap * 0.8 + over * 0.2;
+      const rough = clamp(roughness + (1 - gap) * 0.2, 0.2, 1) * 255;
+      roughData[i] = rough; roughData[i + 1] = rough; roughData[i + 2] = rough; roughData[i + 3] = 255;
+    }
+  }
+  return {
+    albedo: putPixels(makeCanvas(size, size), albedoData),
+    rough: putPixels(makeCanvas(size, size), roughData),
+    normal: heightToNormal(height, size, 1.4),
+  };
+}
+
+/* ------------------------------------------------------ AI face screen --- */
+
+/**
+ * A small transparent canvas that draws the companion's glowing face - two
+ * warm vertical-oval eyes and a smile - so the dark visor reads like the little
+ * robot screen from the concept art. Everything is parameter driven so the same
+ * canvas can blink, look around, talk, doze and wake.
+ */
+export function createFaceTexture(size = 256) {
+  const canvas = makeCanvas(size, size);
+  const ctx = canvas.getContext('2d');
+  const c = size / 2;
+
+  function oval(x, y, rx, ry) {
+    ctx.beginPath();
+    ctx.ellipse(x, y, Math.max(0.5, rx), Math.max(0.5, ry), 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function draw(o) {
+    const col = o.colour || [1, 0.68, 0.32];
+    const rgb = `rgb(${Math.round(col[0]*255)},${Math.round(col[1]*255)},${Math.round(col[2]*255)})`;
+    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = rgb;
+    ctx.strokeStyle = rgb;
+    ctx.shadowColor = rgb;
+    ctx.shadowBlur = size * 0.05 * (0.6 + (o.glow || 2) * 0.16);
+    ctx.lineCap = 'round';
+
+    const gx = (o.gazeX || 0) * size * 0.045;
+    const gy = (o.gazeY || 0) * size * 0.035;
+    const eyeY = c - size * 0.075 + gy;
+    const eyeX = size * 0.175;
+    const open = o.open === undefined ? 1 : o.open;
+    const sx = (o.scaleX || 1);
+    const sy = (o.scaleY || 1);
+    const blink = o.blink || 0;
+    const openY = Math.max(0.04, open * sy * (1 - blink * 0.94));
+
+    const rx = size * 0.062 * sx * (1 + blink * 0.1);
+    const ry = size * 0.095 * openY;
+
+    if (openY < 0.16) {
+      // Dozing: closed eyes as soft downward arcs.
+      ctx.lineWidth = size * 0.035;
+      for (const s of [-1, 1]) {
+        ctx.beginPath();
+        ctx.arc(c + s * eyeX + gx, eyeY - size * 0.02, size * 0.062, Math.PI * 0.15, Math.PI * 0.85);
+        ctx.stroke();
+      }
+    } else {
+      for (const s of [-1, 1]) oval(c + s * eyeX + gx, eyeY, rx, ry);
+    }
+
+    // Mouth: a smile that opens into a rounded mouth while speaking.
+    const mouthY = c + size * 0.16 + gy * 0.5;
+    const speak = o.speaking || 0;
+    if (speak > 0.12) {
+      const openM = size * 0.05 + speak * size * 0.05;
+      oval(c + gx * 0.5, mouthY, size * 0.055, openM);
+    } else {
+      ctx.lineWidth = size * 0.042;
+      ctx.beginPath();
+      ctx.arc(c + gx * 0.5, mouthY - size * 0.055, size * 0.115, Math.PI * 0.18, Math.PI * 0.82);
+      ctx.stroke();
+    }
+    return canvas;
+  }
+
+  return { canvas, draw };
+}
+
 export const SKY_PRESETS = {
   DAY: {
     zenith: [0.34, 0.55, 0.95],

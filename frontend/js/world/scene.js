@@ -7,8 +7,8 @@ import { createCubeTexture } from '../core/gl.js';
 import { planeGeometry } from '../core/geometry.js';
 import { m4trs } from '../core/math.js';
 import {
-  artTexture, contactShadow, fabricTexture, plasterTexture, radialGlow,
-  rugTexture, skyCubeFaces, woodTexture,
+  artTexture, contactShadow, fabricTexture, marbleTexture, plasterTexture,
+  radialGlow, rattanTexture, rugTexture, skyCubeFaces, woodTexture,
 } from '../core/textures.js';
 import { SceneBuilder } from './builder.js';
 import { buildFurniture } from './furniture.js';
@@ -62,6 +62,14 @@ async function generateTextures(onProgress) {
     artTexture(9, ['#3a2b3f', '#d9a05b', '#efe6d8']),
   ];
 
+  onProgress('polishing the marble…');
+  await nextFrame();
+  tex.marble = marbleTexture({ size: 256, seed: 21 });
+
+  onProgress('weaving the rattan…');
+  await nextFrame();
+  tex.rattan = rattanTexture({ size: 256, seed: 9 });
+
   onProgress('dusting the light…');
   await nextFrame();
   tex.glow = radialGlow(128, 2.6);
@@ -76,7 +84,7 @@ async function generateTextures(onProgress) {
  */
 function uploadTextures(renderer, tex) {
   const tiling = { anisotropy: 8 };
-  for (const key of ['floor', 'walnut', 'oak', 'plaster', 'weave']) {
+  for (const key of ['floor', 'walnut', 'oak', 'plaster', 'weave', 'marble', 'rattan']) {
     const set = tex[key];
     if (!set) continue;
     for (const kind of ['albedo', 'rough', 'normal']) {

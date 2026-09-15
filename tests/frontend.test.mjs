@@ -38,7 +38,7 @@ const { Hud } = await import('../frontend/js/ui/hud.js');
 const { DebugOverlay } = await import('../frontend/js/ui/debug.js');
 const { buildScene } = await import('../frontend/js/world/scene.js');
 const { LightRig } = await import('../frontend/js/world/lighting.js');
-const { PLACES, SLEEP_SPOT } = await import('../frontend/js/world/layout.js');
+const { PLACES, SLEEP_SPOT, CAMERA_HOME } = await import('../frontend/js/world/layout.js');
 
 /* --------------------------------------------------------------- harness */
 
@@ -90,8 +90,8 @@ for (const program of programs) {
 
 section('simulation');
 
-const camera = new RoomCamera({ yaw: 0.94, pitch: 0.15, distance: 3.0 });
-camera.home = { target: [-0.35, 1.12, -0.18], yaw: 0.94, pitch: 0.15, distance: 3.0 };
+const camera = new RoomCamera({ ...CAMERA_HOME });
+camera.home = CAMERA_HOME;
 camera.resize(1440, 900);
 
 const entity = new AiEntity(renderer, scene.materials, scene.textures);

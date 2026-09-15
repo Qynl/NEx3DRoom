@@ -268,19 +268,18 @@ function buildCeilingLight(builder, M) {
     M.metalBlack,
     { tag: 'pendantCord', castShadow: false }
   );
+  // Woven rattan lantern, like the concept's pendant.
   builder.add(
-    latheGeometry([
-      [0.005, 0], [0.14, -0.03], [0.2, -0.1], [0.21, -0.16], [0.2, -0.17], [0.02, -0.02],
-    ], 24),
-    T(px, 2.06, pz),
-    M.metalBrushed,
-    { tag: 'pendantShade' }
+    sphereGeometry(0.24, 22, 14, { scaleY: 0.92 }),
+    T(px, 2.0, pz),
+    M.rattan,
+    { tag: 'pendantShade', castShadow: false }
   );
   const bulb = builder.addDynamic(
     sphereGeometry(0.055, 14, 10),
     { ...M.bulb },
     { tag: 'pendantBulb', castShadow: false }
   );
-  bulb.model = T(px, 1.97, pz);
+  bulb.model = T(px, 1.96, pz);
   return { panel, bulb, position: [px, 1.94, pz] };
 }

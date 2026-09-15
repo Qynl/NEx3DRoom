@@ -11,10 +11,10 @@ import { clamp, damp, lerp } from '../core/math.js';
 export const TIME_OF_DAY = {
   DAY: {
     sunDir: [0.42, 0.72, -0.62],
-    sunColor: [3.4, 3.15, 2.7],
-    skyColor: [0.40, 0.46, 0.56],
-    groundColor: [0.20, 0.17, 0.14],
-    ambient: 0.62,
+    sunColor: [3.5, 3.05, 2.45],
+    skyColor: [0.44, 0.45, 0.50],
+    groundColor: [0.24, 0.19, 0.14],
+    ambient: 0.66,
     envIntensity: 1.05,
     exposure: 1.02,
     fogColor: [0.09, 0.10, 0.12],
@@ -143,8 +143,8 @@ export class LightRig {
 
     // 0 - pendant over the coffee table
     this.renderer.setLight(0, refs.pendantPosition, scale(WARM, 2.6 * (0.35 + lamp * 0.65)), 4.4, 0.09);
-    // 1 - recessed ceiling panel
-    this.renderer.setLight(1, refs.ceilingPosition, scale([1.0, 0.94, 0.86], 1.5 * (0.55 + lamp * 0.45)), 5.2, 0.4);
+    // 1 - warm under-shelf glow (the cozy kitchen-strip look)
+    this.renderer.setLight(1, refs.shelfStripPosition || refs.ceilingPosition, scale([1.0, 0.7, 0.44], 2.0 * (0.45 + lamp * 0.55)), 3.2, 0.3);
     // 2 - desk lamp
     this.renderer.setLight(2, refs.deskLampPosition, scale(WARM, 1.5 * c.deskLamp), 2.6, 0.05);
     // 3 - floor lamp
@@ -163,7 +163,8 @@ export class LightRig {
 
     // Emissive fixtures follow the same curve.
     if (refs.pendantBulb) refs.pendantBulb.material.emissiveStrength = 2.2 + lamp * 4.5;
-    if (refs.ceilingPanel) refs.ceilingPanel.material.emissiveStrength = 0.7 + lamp * 0.9;
+    if (refs.ceilingPanel) refs.ceilingPanel.material.emissiveStrength = 0.5 + lamp * 0.7;
+    if (refs.shelfStrip) refs.shelfStrip.material.emissiveStrength = 1.4 + lamp * 3.2;
     setShade(refs.deskLampShade, c.deskLamp);
     setShade(refs.floorLampShade, lamp);
     setShade(refs.nightLampShade, lamp * 0.9);
