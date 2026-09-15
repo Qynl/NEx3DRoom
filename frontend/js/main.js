@@ -368,6 +368,7 @@ async function main() {
     voice: (event) => backend.voiceEvent(event),
     setState: (name) => backend.patch({ currentState: name }),
     goTo: (name) => backend.patch({ targetLocation: name }),
+    emote: (name) => entity.playEmote(name),
     toggleDebug: () => debug.toggle(),
   };
 
@@ -377,6 +378,7 @@ async function main() {
     voice: (event) => backend.voiceEvent(event),
     setTimeOfDay: (name) => setTimeOfDay(name),
     resetCamera: () => camera.reset(),
+    emote: (name) => entity.playEmote(name),
   });
 
   resize();

@@ -210,6 +210,29 @@ runFrames(240);
 
 /* --------------------------------------------------------- sleep + wake */
 
+section('poses and emotes');
+apply({ currentState: 'WORKING', targetLocation: 'DESK' });
+runFrames(180);
+check(entity.poseInfo.lean > 0.1, 'leans in while working', `lean ${entity.poseInfo.lean.toFixed(2)}`);
+
+entity.playEmote('spin');
+runFrames(45);
+check(entity.poseInfo.spin > 1.2, 'spin emote turns the body', `spin ${entity.poseInfo.spin.toFixed(2)} rad`);
+runFrames(60);
+check(entity.emote === null && entity.poseInfo.spin < 0.01,
+  'emote envelope finishes and settles', `spin ${entity.poseInfo.spin.toFixed(3)}`);
+
+apply({ currentState: 'LISTENING', targetLocation: 'CENTER' });
+check(entity.emote && entity.emote.name === 'nod', 'listening answers with a nod', String(entity.emote && entity.emote.name));
+
+entity.playEmote('stretch');
+runFrames(30);
+check(entity.poseInfo.yawn > 0.3, 'stretch comes with a yawn', `yawn ${entity.poseInfo.yawn.toFixed(2)}`);
+
+entity.playEmote('bounce');
+runFrames(12);
+check(entity.poseInfo.bounce > 0.02, 'happy bounce lifts the body', `bounce ${entity.poseInfo.bounce.toFixed(3)}`);
+
 section('sleep and wake');
 apply({ currentState: 'RESTING', targetLocation: 'BED' });
 runFrames(300);

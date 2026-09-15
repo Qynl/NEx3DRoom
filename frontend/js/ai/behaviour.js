@@ -27,6 +27,8 @@ export class CompanionBehaviour {
     this.speakingLevel = 0;
     this.listeningPulse = 0;
     this.awake = true;
+    this.idleEmoteTimer = 6;
+    this.workEmoteTimer = 4;
 
     // Put the entity where the backend thinks it already is.
     const start = PLACES.CENTER;
@@ -80,6 +82,7 @@ export class CompanionBehaviour {
         break;
       case 'WAKING':
         this._wakeSequence();
+        this.entity.playEmote('stretch');
         break;
       case 'THINKING':
       case 'WORKING':
@@ -91,11 +94,21 @@ export class CompanionBehaviour {
         this.sequence = null;
         this._travelTo('CENTER');
         this.flight.hoverAmplitude = 0.03;
+        this.entity.playEmote('nod');
         break;
       case 'SPEAKING':
         this.sequence = null;
         if (this.location !== 'CENTER' && this.targetLocation === 'CENTER') this._travelTo('CENTER');
         this.flight.hoverAmplitude = 0.026;
+        this.entity.playEmote('bounce');
+        break;
+      case 'IDLE':
+        this.sequence = null;
+        this._travelTo(this.targetLocation);
+        this.flight.hoverAmplitude = 0.024;
+        if (Math.random() < 0.4) {
+          this.entity.playEmote(['wiggle', 'bounce', 'look'][Math.floor(Math.random() * 3)]);
+        }
         break;
       default:
         this.sequence = null;
@@ -235,6 +248,24 @@ export class CompanionBehaviour {
       this.listeningPulse = 0;
     }
     entity.setSpeakingLevel(this.speakingLevel);
+
+    // Little gestures while idle or focused, so it never feels frozen.
+    if (!this.flight.moving) {
+      if (state === 'IDLE' || state === 'BORED') {
+        this.idleEmoteTimer -= dt;
+        if (this.idleEmoteTimer <= 0) {
+          this.idleEmoteTimer = 7 + Math.random() * 9;
+          const pool = ['spin', 'stretch', 'wiggle', 'look', 'bounce', 'look'];
+          entity.playEmote(pool[Math.floor(Math.random() * pool.length)]);
+        }
+      } else if (state === 'WORKING' || state === 'THINKING') {
+        this.workEmoteTimer -= dt;
+        if (this.workEmoteTimer <= 0) {
+          this.workEmoteTimer = 4 + Math.random() * 5;
+          entity.playEmote(Math.random() < 0.6 ? 'look' : 'nod');
+        }
+      }
+    }
 
     // Face the monitor while working.
     if ((state === 'WORKING' || state === 'THINKING') && screenPosition && !this.flight.moving) {

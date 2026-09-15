@@ -7,6 +7,7 @@
 import { PLACES } from '../world/layout.js';
 
 const STATES = ['IDLE', 'BORED', 'LISTENING', 'THINKING', 'WORKING', 'SPEAKING', 'RESTING', 'SLEEPING', 'WAKING'];
+const EMOTES = ['spin', 'stretch', 'wiggle', 'nod', 'bounce', 'look'];
 const VOICE_EVENTS = [
   'user_started_speaking',
   'user_finished_speaking',
@@ -22,6 +23,7 @@ export class DebugOverlay {
     this.statesRow = elements.states || document.getElementById('debugStates');
     this.placesRow = elements.places || document.getElementById('debugPlaces');
     this.voiceRow = elements.voice || document.getElementById('debugVoice');
+    this.emotesRow = elements.emotes || document.getElementById('debugEmotes');
     this.log = elements.log || document.getElementById('debugLog');
     this.visible = false;
     this.actions = {};
@@ -90,6 +92,16 @@ export class DebugOverlay {
         }));
       }
       this.voiceRow.appendChild(make('interaction', false, () => this.actions.voice?.('user_interaction')));
+    }
+
+    if (this.emotesRow) {
+      this.emotesRow.textContent = '';
+      for (const emote of EMOTES) {
+        this.emotesRow.appendChild(make(emote, false, () => {
+          this.actions.emote?.(emote);
+          this.logLine(`emote: ${emote}`);
+        }));
+      }
     }
   }
 
