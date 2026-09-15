@@ -12,6 +12,7 @@ import {
 } from '../core/textures.js';
 import { SceneBuilder } from './builder.js';
 import { buildFurniture } from './furniture.js';
+import { buildProps } from './props.js';
 import { ROOM, WINDOW } from './layout.js';
 import { createMaterials } from './materials.js';
 import { buildShell } from './room.js';
@@ -123,6 +124,7 @@ export async function buildScene(renderer, onProgress = () => {}) {
 
   const shellRefs = buildShell(builder, materials) || {};
   const furnitureRefs = buildFurniture(builder, materials) || {};
+  const propsRefs = buildProps(builder, materials, renderer) || {};
 
   onProgress('opening the curtains…');
   await nextFrame();
@@ -136,6 +138,7 @@ export async function buildScene(renderer, onProgress = () => {}) {
   const refs = {
     ...shellRefs,
     ...furnitureRefs,
+    ...propsRefs,
     skyPanel,
     lightPool,
     pendantPosition: shellRefs.position || [-0.86, 1.94, 0.62],

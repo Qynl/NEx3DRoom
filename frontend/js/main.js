@@ -81,6 +81,7 @@ async function main() {
     scene.refs.screen.material.emissive = [0.55, 0.85, 1.0];
     scene.refs.screen.material.emissiveStrength = 0;
     scene.refs.screenTexture = texture;
+    scene.refs.screenDraw = screen;
   }
 
   const lights = new LightRig(renderer, scene.refs);
@@ -93,6 +94,8 @@ async function main() {
   const behaviour = new CompanionBehaviour({
     entity,
     flight,
+    refs: scene.refs,
+    renderer,
     onArrival: (location) => {
       backend.reportArrival(location);
       debug.logLine(`arrived at ${location}`);
@@ -373,6 +376,7 @@ async function main() {
     setState: (name) => backend.patch({ currentState: name }),
     goTo: (name) => backend.patch({ targetLocation: name }),
     emote: (name) => entity.playEmote(name),
+    task: (name) => backend.patch({ task: name, currentState: 'WORKING' }),
     toggleDebug: () => debug.toggle(),
   };
 
@@ -383,6 +387,7 @@ async function main() {
     setTimeOfDay: (name) => setTimeOfDay(name),
     resetCamera: () => camera.reset(),
     emote: (name) => entity.playEmote(name),
+    task: (name) => backend.patch({ task: name, currentState: 'WORKING' }),
   });
 
   resize();

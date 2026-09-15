@@ -379,8 +379,60 @@ export function createScreenTexture(width = 320, height = 200) {
     hue: random(),
   }));
 
+  let mode = 'code';
+  const QUERY = 'how to boil an egg';
+
+  function drawSearch(ctx, a, t) {
+    // Search bar with a typed query.
+    ctx.fillStyle = 'rgba(255,255,255,0.10)';
+    ctx.fillRect(14, 14, width - 60, 20);
+    ctx.fillStyle = '#cfe8f5';
+    ctx.font = '10px monospace';
+    const shown = QUERY.slice(0, Math.floor(t * 8) % (QUERY.length + 6));
+    ctx.fillText(shown, 20, 28);
+    // Magnifier icon.
+    ctx.strokeStyle = `rgba(127,228,255,${0.9 * a})`;
+    ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.arc(width - 30, 24, 8, 0, Math.PI * 2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(width - 24, 30); ctx.lineTo(width - 17, 37); ctx.stroke();
+    // Spinner.
+    ctx.beginPath();
+    ctx.arc(width / 2, height / 2, 16, t * 4, t * 4 + Math.PI * 1.3);
+    ctx.stroke();
+    // Result rows fade in.
+    for (let i = 0; i < 4; i++) {
+      const reveal = clamp((t - 1 - i * 0.5) * 2, 0, 1);
+      if (reveal <= 0) continue;
+      ctx.globalAlpha = a * reveal;
+      ctx.fillStyle = '#7fd4e8';
+      ctx.fillRect(16, 60 + i * 22, 90, 5);
+      ctx.fillStyle = '#5f7f8c';
+      ctx.fillRect(16, 69 + i * 22, width - 60 - i * 24, 3);
+      ctx.globalAlpha = a;
+    }
+  }
+
+  function drawWeather(ctx, a, t) {
+    const g = ctx.createLinearGradient(0, 0, 0, height);
+    g.addColorStop(0, '#1b2a44'); g.addColorStop(1, '#0a1016');
+    ctx.fillStyle = g; ctx.fillRect(0, 0, width, height);
+    // Sun.
+    ctx.fillStyle = `rgba(255,214,140,${0.9 * a})`;
+    ctx.beginPath(); ctx.arc(width * 0.3, 52, 18, 0, Math.PI * 2); ctx.fill();
+    // Drifting cloud.
+    const cx = ((t * 12) % (width + 80)) - 40;
+    ctx.fillStyle = `rgba(220,230,240,${0.8 * a})`;
+    for (const [dx, dy, r] of [[0, 0, 14], [14, 4, 11], [-14, 5, 10]]) {
+      ctx.beginPath(); ctx.arc(cx + dx, 60 + dy, r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.fillStyle = '#cfe8f5'; ctx.font = '12px monospace';
+    ctx.fillText('21°C  partly cloudy', 16, height - 24);
+  }
+
   return {
     canvas,
+    setMode(m) { if (['code', 'search', 'weather'].includes(m)) mode = m; },
+    getMode() { return mode; },
     /** activity: 0 = standby, 1 = busy */
     draw(activity = 1, t = 0) {
       const ctx = canvas.getContext('2d');
@@ -399,6 +451,9 @@ export function createScreenTexture(width = 320, height = 200) {
 
       const a = clamp(activity, 0, 1);
       ctx.globalAlpha = a;
+
+      if (mode === 'search') { drawSearch(ctx, a, t); ctx.globalAlpha = 1; return canvas; }
+      if (mode === 'weather') { drawWeather(ctx, a, t); ctx.globalAlpha = 1; return canvas; }
 
       // "Code"
       const lineH = 11;

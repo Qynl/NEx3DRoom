@@ -73,6 +73,22 @@ EXTRA_EVENTS: Tuple[str, ...] = (
 
 ALL_EVENTS: Tuple[str, ...] = VOICE_EVENTS + EXTRA_EVENTS
 
+#: The chores the companion knows how to perform. Each one maps to a
+#: hand-choreographed routine in the renderer (see frontend/js/ai/tasks.js).
+TASKS: Tuple[str, ...] = (
+    "search",        # to the PC, search animation on screen, lean in, return
+    "reading",       # grab a book from the shelf, sit and read it
+    "writing",       # write in the desk notebook, lines appearing
+    "calculating",   # tap the desk calculator, digits appearing
+    "thinking",      # pace, pause at the window, look out, sudden turn
+    "music",         # lounge on the sofa and sway to a beat
+    "planning",      # pin notes onto the wall board
+    "weather",       # check the sky at the window
+    "filing",        # open the cabinet and rifle through it
+    "casual",        # stay put and answer where it is
+    "long",          # work at the desk, get up to think, come back, re-type
+)
+
 #: Where each state wants to be physically.
 STATE_LOCATION: Dict[str, str] = {
     "IDLE": "CENTER",
@@ -238,6 +254,8 @@ class CompanionState:
         self.location = location
         self.target_location = STATE_LOCATION.get(state, location)
         self.time_of_day = tod
+        saved_task = str(data.get("task", "") or "").lower()
+        self.task = saved_task if saved_task in TASKS else None
         self.last_interaction = float(data.get("lastInteraction", 0.0) or 0.0)
         self.state_entered_at = time.time()
         self.interactions = int(data.get("interactions", 0) or 0)
@@ -285,6 +303,7 @@ class CompanionState:
                 if self.last_interaction
                 else None,
                 "activity": self._activity_label(),
+                "task": self.task,
                 "turn": turn_info,
                 "model": {
                     "name": brain_info.get("name"),
@@ -399,6 +418,15 @@ class CompanionState:
             if isinstance(patch.get("currentState"), str):
                 self._set_state(patch["currentState"], reason="patch")
 
+            requested_task = patch.get("task")
+            if requested_task is None or requested_task == "":
+                if "task" in patch:
+                    self.task = None
+                    self._dirty = True
+            elif isinstance(requested_task, str) and requested_task.lower() in TASKS:
+                self.task = requested_task.lower()
+                self._dirty = True
+
             if isinstance(patch.get("targetLocation"), str):
                 loc = patch["targetLocation"].upper()
                 if loc in LOCATIONS:
@@ -490,6 +518,8 @@ class CompanionState:
 
     def _on_task_assigned(self, payload: Dict[str, Any]) -> None:
         self._touch()
+        requested = str(payload.get("task", "") or "").lower()
+        self.task = requested if requested in TASKS else random.choice(TASKS)
         self._start_turn(trigger="task")
         self._set_state("WORKING", reason="task_assigned")
         if self._turn:
@@ -503,6 +533,7 @@ class CompanionState:
             self.turns_completed += 1
             self.brain.cancel(self._turn)
             self._turn = None
+        self.task = None
         self._set_state("IDLE", reason="ai_finished_speaking")
         self._next_wander_at = time.time() + random.uniform(25.0, 55.0)
 
@@ -528,6 +559,8 @@ class CompanionState:
 
     # ------------------------------------------------------------- turn logic
     def _start_turn(self, trigger: str = "voice") -> None:
+        if self.task is None:
+            self.task = random.choice(TASKS)
         self._turn = self.brain.begin_turn(
             {
                 "trigger": trigger,
@@ -677,6 +710,7 @@ class CompanionState:
                     "currentLocation": self.location,
                     "targetLocation": self.target_location,
                     "timeOfDay": self.time_of_day,
+                    "task": self.task,
                     "lastInteraction": round(self.last_interaction, 3),
                     "interactions": self.interactions,
                     "sleepCycles": self.sleep_cycles,

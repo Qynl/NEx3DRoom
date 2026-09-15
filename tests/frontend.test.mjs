@@ -99,6 +99,8 @@ const flight = new FlightController();
 const arrivals = [];
 const behaviour = new CompanionBehaviour({
   entity, flight,
+  refs: scene.refs,
+  renderer,
   onArrival: (location) => arrivals.push(location),
 });
 const lights = new LightRig(renderer, scene.refs);
@@ -318,6 +320,31 @@ for (const tod of ['SUNSET', 'NIGHT', 'DAY']) {
 }
 
 /* ------------------------------------------------- restart at last spot */
+
+section('task choreography');
+behaviour.idleEmoteTimer = 1e9;
+behaviour.workEmoteTimer = 1e9;
+
+behaviour.sync({ ...state, currentState: 'WORKING', task: 'calculating' });
+runFrames(300);
+check(behaviour.director.active && behaviour.director.name === 'calculating',
+  'calculating task takes over', behaviour.director.name || 'none');
+check(scene.refs.calcScreen.material.emissiveStrength > 0, 'calculator screen lights up',
+  scene.refs.calcScreen.material.emissiveStrength.toFixed(2));
+check(entity.poseInfo.lean > 0.05, 'leans over the calculator', `lean ${entity.poseInfo.lean.toFixed(2)}`);
+
+behaviour.sync({ ...state, currentState: 'WORKING', task: 'reading' });
+runFrames(360);
+check(scene.refs.book.visible === true, 'carries a book to the sofa', String(scene.refs.book.visible));
+
+behaviour.sync({ ...state, currentState: 'WORKING', task: 'search' });
+runFrames(60);
+check(behaviour.director.name === 'search', 'search task starts', behaviour.director.name);
+
+behaviour.sync({ ...state, currentState: 'IDLE', task: null });
+runFrames(30);
+check(!behaviour.director.active, 'task releases when work ends');
+check(scene.refs.book.visible === false, 'book put away', String(scene.refs.book.visible));
 
 section('restart with a remembered location');
 {

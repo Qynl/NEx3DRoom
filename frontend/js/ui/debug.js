@@ -8,6 +8,7 @@ import { PLACES } from '../world/layout.js';
 
 const STATES = ['IDLE', 'BORED', 'LISTENING', 'THINKING', 'WORKING', 'SPEAKING', 'RESTING', 'SLEEPING', 'WAKING'];
 const EMOTES = ['spin', 'stretch', 'wiggle', 'nod', 'bounce', 'look', 'shake', 'happy', 'sigh', 'scan', 'peek'];
+const TASKS = ['search', 'reading', 'writing', 'calculating', 'thinking', 'music', 'planning', 'weather', 'filing', 'casual', 'long'];
 const VOICE_EVENTS = [
   'user_started_speaking',
   'user_finished_speaking',
@@ -24,6 +25,7 @@ export class DebugOverlay {
     this.placesRow = elements.places || document.getElementById('debugPlaces');
     this.voiceRow = elements.voice || document.getElementById('debugVoice');
     this.emotesRow = elements.emotes || document.getElementById('debugEmotes');
+    this.tasksRow = elements.tasks || document.getElementById('debugTasks');
     this.log = elements.log || document.getElementById('debugLog');
     this.visible = false;
     this.actions = {};
@@ -92,6 +94,16 @@ export class DebugOverlay {
         }));
       }
       this.voiceRow.appendChild(make('interaction', false, () => this.actions.voice?.('user_interaction')));
+    }
+
+    if (this.tasksRow) {
+      this.tasksRow.textContent = '';
+      for (const task of TASKS) {
+        this.tasksRow.appendChild(make(task, false, () => {
+          this.actions.task?.(task);
+          this.logLine(`task: ${task}`);
+        }));
+      }
     }
 
     if (this.emotesRow) {

@@ -7,10 +7,11 @@
  */
 
 import { clamp, lerp, v3, v3copy, v3dist, v3normalize } from '../core/math.js';
+import { TaskDirector } from './tasks.js';
 import { BED_APPROACH, DESK_WORK, PLACES, SLEEP_SPOT } from '../world/layout.js';
 
 export class CompanionBehaviour {
-  constructor({ entity, flight, onArrival }) {
+  constructor({ entity, flight, onArrival, refs, renderer }) {
     this.entity = entity;
     this.flight = flight;
     this.onArrival = onArrival || (() => {});
@@ -32,6 +33,12 @@ export class CompanionBehaviour {
     this.atWorkSpot = false;
     this.typeTimer = 0;
     this.typingPhase = true;
+    this.task = null;
+
+    this.director = new TaskDirector({
+      entity, flight, refs: refs || {}, renderer,
+      onDone: () => { this.task = null; },
+    });
 
     // Put the entity where the backend thinks it already is.
     const start = PLACES.CENTER;
@@ -67,6 +74,16 @@ export class CompanionBehaviour {
     this.state = nextState;
     this.targetLocation = nextTarget;
     this.entity.setState(nextState);
+
+    const working = nextState === 'WORKING' || nextState === 'THINKING';
+    const wantTask = working ? (snapshot.task || null) : null;
+    if (wantTask && wantTask !== this.task) {
+      this.task = wantTask;
+      if (!this.director.setTask(wantTask)) this.task = null;
+    } else if (!working && this.director.active) {
+      this.director.stop();
+      this.task = null;
+    }
 
     if (stateChanged) this._enterState(nextState);
     if (targetChanged && !this.sequence) this._travelTo(nextTarget);
@@ -252,6 +269,17 @@ export class CompanionBehaviour {
     const entity = this.entity;
     const state = this.state;
 
+    if (this.director.active) {
+      this.director.update(dt);
+      this.flight.update(dt, null);
+      v3copy(entity.position, this.flight.position);
+      v3copy(entity.forward, this.flight.forward);
+      v3copy(entity.up, this.flight.up);
+      v3copy(entity.velocity, this.flight.velocity);
+      entity.update(dt, cameraPosition);
+      return { location: this.location, moving: this.flight.moving, task: this.director.name };
+    }
+
     // Where the eyes go.
     this.gazeTimer -= dt;
     if (this.gazeTimer <= 0) {
@@ -331,7 +359,7 @@ export class CompanionBehaviour {
       ]);
     }
 
-    this._updateActivity(dt, state);
+    if (!this.director.active) this._updateActivity(dt, state);
 
     this.flight.update(dt, null);
     v3copy(entity.position, this.flight.position);

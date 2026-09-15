@@ -204,6 +204,32 @@ class StateMachineTests(unittest.TestCase):
         self.assertEqual(snap["currentLocation"], "WINDOW")
         self.assertEqual(snap["targetLocation"], "WINDOW")
 
+    def test_task_lifecycle(self):
+        snap = self.state.handle_voice_event(
+            {"event": "task_assigned", "task": "calculating"})
+        self.assertEqual(snap["task"], "calculating")
+        self.assertEqual(snap["currentState"], "WORKING")
+
+        # A voice turn without an explicit task still picks a known one.
+        st = make_state(self.tmp)
+        st.handle_voice_event({"event": "user_started_speaking"})
+        st.handle_voice_event({"event": "user_finished_speaking"})
+        from backend.state import TASKS
+        self.assertIn(st.snapshot()["task"], TASKS)
+
+        # Finishing the turn clears the task.
+        self.state.handle_voice_event({"event": "ai_started_speaking"})
+        snap = self.state.handle_voice_event({"event": "ai_finished_speaking"})
+        self.assertIsNone(snap["task"])
+
+        # Patch can set and clear it.
+        snap = self.state.apply_patch({"task": "planning"})
+        self.assertEqual(snap["task"], "planning")
+        snap = self.state.apply_patch({"task": None})
+        self.assertIsNone(snap["task"])
+        with_unknown = self.state.apply_patch({"task": "make_coffee"})
+        self.assertIsNone(with_unknown["task"])
+
     def test_time_of_day_patch(self):
         snap = self.state.apply_patch({"timeOfDay": "night"})
         self.assertEqual(snap["timeOfDay"], "NIGHT")

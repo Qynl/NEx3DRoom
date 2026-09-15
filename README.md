@@ -228,7 +228,7 @@ the frame time is poor) and reports telemetry to `POST /api/state` every 5 s.
 ```bash
 python3 -m unittest discover -s tests -v   # backend: 33 tests
 node tests/geometry.test.mjs               # mesh winding / normals / bounds
-node tests/frontend.test.mjs               # 69 checks, whole app headless
+node tests/frontend.test.mjs               # 76 checks, whole app headless
 ```
 
 `tests/frontend.test.mjs` boots the real modules against a recording WebGL2
@@ -244,6 +244,26 @@ speed (no teleporting) and the sleep/wake choreography.
 > way to confirm the backend link and the frame rate.
 
 ---
+
+## A day of little jobs
+
+The backend assigns a `task` whenever the companion starts working (or you can
+pick one: F1 overlay task row, or `window.__nex.task('reading')`, or
+`POST /api/state {"task":"planning","currentState":"WORKING"}`). A task director
+then choreographs real, visible behaviour:
+
+- **search** – flies to the PC, a search bar + spinner + results light up on the
+  monitor, it leans in, then returns.
+- **reading** – grabs a book from the shelf and sits on the sofa with it.
+- **writing** – writes in the desk notebook; handwritten lines appear.
+- **calculating** – taps the desk calculator; digits roll up on its little screen.
+- **thinking** – paces, pauses at the window, looks out, then a sudden spin.
+- **music** – lounges on the sofa and sways to a beat.
+- **planning** – pins notes onto the wall board one by one.
+- **weather** – checks the sky at the window.
+- **filing** – slides the cabinet drawer open and rifles through it.
+- **casual** – stays put and answers where it is.
+- **long** – works at the desk, gets up to think, comes back and re-types.
 
 ## Project rules this build follows
 
