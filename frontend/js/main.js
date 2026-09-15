@@ -276,7 +276,11 @@ async function main() {
     const busy = state.currentState === 'WORKING' || state.currentState === 'THINKING';
     const wantMonitor = busy ? 1 : state.currentState === 'SPEAKING' ? 0.45 : 0.05;
     monitorActivity += (wantMonitor - monitorActivity) * clamp(dt * 2.2, 0, 1);
-    lights.setMonitorActivity(monitorActivity);
+    // The screen flickers with the companion's typing so the desk feels alive.
+    const typingFlicker = entity.activity === 'typing'
+      ? 0.85 + Math.abs(Math.sin(now / 90)) * 0.15
+      : monitorActivity;
+    lights.setMonitorActivity(Math.max(monitorActivity, typingFlicker));
 
     // The monitor redraws slowly - it is a background detail, not a game.
     screenTimer -= dt;

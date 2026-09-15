@@ -7,7 +7,7 @@
  */
 
 import { clamp, lerp, v3, v3copy, v3dist, v3normalize } from '../core/math.js';
-import { BED_APPROACH, PLACES, SLEEP_SPOT } from '../world/layout.js';
+import { BED_APPROACH, DESK_WORK, PLACES, SLEEP_SPOT } from '../world/layout.js';
 
 export class CompanionBehaviour {
   constructor({ entity, flight, onArrival }) {
@@ -29,6 +29,9 @@ export class CompanionBehaviour {
     this.awake = true;
     this.idleEmoteTimer = 6;
     this.workEmoteTimer = 4;
+    this.atWorkSpot = false;
+    this.typeTimer = 0;
+    this.typingPhase = true;
 
     // Put the entity where the backend thinks it already is.
     const start = PLACES.CENTER;
@@ -71,6 +74,8 @@ export class CompanionBehaviour {
   }
 
   _enterState(state) {
+    if (state !== 'WORKING') this.atWorkSpot = false;
+    if (state !== 'WORKING' && state !== 'THINKING') this.entity.setActivity('none');
     switch (state) {
       case 'SLEEPING':
         this._sleepSequence();
@@ -198,6 +203,49 @@ export class CompanionBehaviour {
     });
   }
 
+  /* ------------------------------------------------------ activities ----- */
+
+  /** Pick a sustained, location-aware activity and choreograph the desk perch. */
+  _updateActivity(dt, state) {
+    const entity = this.entity;
+    const settled = !this.flight.moving && !this.sequence;
+
+    if (state === 'WORKING') {
+      // Fly in and perch right at the keyboard, then type / read in cycles.
+      if (this.location === 'DESK' && settled && !this.atWorkSpot) {
+        this.flight.flyTo(DESK_WORK.position, {
+          duration: 1.2,
+          face: DESK_WORK.face,
+          onArrive: () => { this.atWorkSpot = true; },
+        });
+      }
+      if (this.atWorkSpot) {
+        this.typeTimer -= dt;
+        if (this.typeTimer <= 0) {
+          this.typingPhase = !this.typingPhase;
+          this.typeTimer = this.typingPhase ? 2.5 + Math.random() * 2.5 : 1.2 + Math.random() * 1.2;
+          if (!this.typingPhase && Math.random() < 0.4) entity.playEmote('nod');
+        }
+        entity.setActivity(this.typingPhase ? 'typing' : 'reading');
+      } else {
+        entity.setActivity('none');
+      }
+      return;
+    }
+
+    if (state === 'THINKING') {
+      entity.setActivity(settled && this.location === 'DESK' ? 'pondering' : 'none');
+      return;
+    }
+
+    if ((state === 'IDLE' || state === 'BORED') && settled) {
+      if (this.location === 'WINDOW') { entity.setActivity('watching'); return; }
+      if (this.location === 'SOFA') { entity.setActivity('lounging'); return; }
+    }
+
+    entity.setActivity('none');
+  }
+
   /* --------------------------------------------------------------- update - */
 
   update(dt, cameraPosition, screenPosition) {
@@ -282,6 +330,8 @@ export class CompanionBehaviour {
         screenPosition[2] - this.flight.position[2],
       ]);
     }
+
+    this._updateActivity(dt, state);
 
     this.flight.update(dt, null);
     v3copy(entity.position, this.flight.position);

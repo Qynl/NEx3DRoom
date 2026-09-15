@@ -150,6 +150,11 @@ export class AiEntity {
     this.rem = 0;
     this.wakeSurprise = 0;
 
+    // Purposeful activity (typing / reading / pondering / watching / lounging).
+    this.activity = 'none';
+    this.saccadeTimer = 0;
+    this.saccade = [0, 0];
+
     this.matrix = m4identity(new Float32Array(16));
     this.local = m4identity(new Float32Array(16));
     this.tmp = m4identity(new Float32Array(16));
@@ -246,6 +251,12 @@ export class AiEntity {
     this.speakingLevel = clamp(level, 0, 1);
   }
 
+  /** Put the companion into a sustained activity that shapes its micro-motion. */
+  setActivity(name) {
+    const known = ['none', 'typing', 'reading', 'pondering', 'watching', 'lounging'];
+    if (known.includes(name)) this.activity = name;
+  }
+
   /** Play a one-shot gesture, optionally after a delay in seconds. */
   playEmote(name, delay = 0) {
     const duration = EMOTE_DURATIONS[name];
@@ -336,6 +347,36 @@ export class AiEntity {
       this.rem = 0;
     }
 
+    /* ---- sustained activity micro-motion ------------------------------- */
+    if (this.activity === 'typing') {
+      // Perched at the keyboard: lean in, settle low, tap-tap-tap.
+      const tap = Math.max(0, Math.sin(this.time * 15)) * 0.5 + Math.max(0, Math.sin(this.time * 23 + 1.7)) * 0.5;
+      ep.bounce += -0.035 - tap * 0.006;
+      ep.lean += 0.12;
+      this.saccadeTimer -= dt;
+      if (this.saccadeTimer <= 0) {
+        this.saccadeTimer = 0.18 + Math.random() * 0.3;
+        this.saccade = [(Math.random() * 2 - 1) * 0.6, -0.05 + Math.random() * 0.2];
+      }
+      ep.gaze = this.saccade;
+    } else if (this.activity === 'reading') {
+      ep.lean += 0.07;
+      ep.gaze = [Math.sin(this.time * 0.9) * 0.5, -0.05];
+    } else if (this.activity === 'pondering') {
+      ep.lean += -0.05;
+      ep.gaze = [0.15, 0.5 + Math.sin(this.time * 0.7) * 0.1];
+      ep.squint = 0.3;
+    } else if (this.activity === 'watching') {
+      // Track something drifting past the window, with rests.
+      const sweep = Math.sin(this.time * 0.35) * 0.7;
+      ep.gaze = [sweep, 0.1 + Math.sin(this.time * 0.21) * 0.15];
+      ep.roll += Math.sin(this.time * 0.3) * 0.05;
+    } else if (this.activity === 'lounging') {
+      ep.roll += Math.sin(this.time * 0.5) * 0.06;
+      ep.bounce += Math.sin(this.time * 0.8) * 0.01;
+      ep.gaze = [Math.sin(this.time * 0.23) * 0.5, Math.sin(this.time * 0.17) * 0.2];
+    }
+
     this.poseInfo.emote = this.emote ? this.emote.name : null;
     this.poseInfo.spin = ep.spin;
     this.poseInfo.lean = this.posture.lean + ep.lean;
@@ -344,6 +385,7 @@ export class AiEntity {
     this.poseInfo.yawn = ep.yawn;
     this.poseInfo.happy = ep.happy;
     this.poseInfo.gazeX = ep.gaze ? ep.gaze[0] : this.gaze[0];
+    this.poseInfo.activity = this.activity;
 
     // Orient the body: spin about up, lean about right, roll about forward.
     const fwd = this._fwd, upv = this._upv, rgt = this._rgt;

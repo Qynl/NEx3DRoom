@@ -38,7 +38,7 @@ const { Hud } = await import('../frontend/js/ui/hud.js');
 const { DebugOverlay } = await import('../frontend/js/ui/debug.js');
 const { buildScene } = await import('../frontend/js/world/scene.js');
 const { LightRig } = await import('../frontend/js/world/lighting.js');
-const { PLACES, SLEEP_SPOT, CAMERA_HOME } = await import('../frontend/js/world/layout.js');
+const { PLACES, SLEEP_SPOT, CAMERA_HOME, DESK_WORK } = await import('../frontend/js/world/layout.js');
 
 /* --------------------------------------------------------------- harness */
 
@@ -252,6 +252,24 @@ const g0 = entity.poseInfo.gazeX;
 runFrames(36);
 const g1 = entity.poseInfo.gazeX;
 check(Math.abs(g1 - g0) > 0.3, 'scan sweeps the eyes across the screen', `gaze ${g0.toFixed(2)} -> ${g1.toFixed(2)}`);
+
+section('activities');
+apply({ currentState: 'WORKING', targetLocation: 'DESK' });
+runFrames(420);
+check(behaviour.atWorkSpot === true, 'flies in and perches at the keyboard');
+const atPc = Math.abs(entity.position[0] - DESK_WORK.position[0]) < 0.15
+  && Math.abs(entity.position[2] - DESK_WORK.position[2]) < 0.15;
+check(atPc, 'sits at the PC instead of hovering mid-room',
+  entity.position.map((v) => v.toFixed(2)).join(', '));
+check(entity.activity === 'typing' || entity.activity === 'reading',
+  'runs a typing/reading cycle', entity.activity);
+check(entity.poseInfo.lean > 0.08, 'leans into the screen while working',
+  `lean ${entity.poseInfo.lean.toFixed(2)}`);
+
+apply({ currentState: 'IDLE', targetLocation: 'WINDOW' });
+runFrames(300);
+check(entity.activity === 'watching' || !behaviour.atWorkSpot, 'watches the window when idle there', entity.activity);
+entity.setActivity('none');
 
 section('sleep and wake');
 apply({ currentState: 'RESTING', targetLocation: 'BED' });

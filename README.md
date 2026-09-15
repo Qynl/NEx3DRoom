@@ -119,6 +119,14 @@ delighted happy-arc eyes; boredom sighs; asleep it breathes, curls and its eyes
 dart in REM flickers. It double-blinks sometimes. The F1 overlay has an emote
 row, and `window.__nex.emote('spin')` drives it from the console.
 
+Beyond gestures it has *purpose*. When a task lands it flies in and perches at
+the keyboard, leans into the monitor and types - quick tap-tap body rhythm,
+eyes saccading across the screen, the monitor glow flickering with it - then
+pauses to read and nods when something lands. Thinking it hovers back and
+ponders, eyes up. Idle at the window it watches things drift past; on the sofa
+it lounges and people-watches. These sustained activities layer on top of the
+emotes so the room always has something going on.
+
 States: `IDLE`, `BORED`, `THINKING`, `WORKING`, `RESTING`, `SLEEPING`,
 `WAKING`, `LISTENING`, `SPEAKING`.
 
@@ -220,7 +228,7 @@ the frame time is poor) and reports telemetry to `POST /api/state` every 5 s.
 ```bash
 python3 -m unittest discover -s tests -v   # backend: 33 tests
 node tests/geometry.test.mjs               # mesh winding / normals / bounds
-node tests/frontend.test.mjs               # 64 checks, whole app headless
+node tests/frontend.test.mjs               # 69 checks, whole app headless
 ```
 
 `tests/frontend.test.mjs` boots the real modules against a recording WebGL2

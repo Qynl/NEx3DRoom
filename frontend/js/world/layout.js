@@ -100,6 +100,13 @@ export const PLACES = {
   },
 };
 
+/** Where the companion perches to actually use the PC: just in front of the
+ *  keyboard, low enough to read as "sitting at the desk", facing the monitor. */
+export const DESK_WORK = {
+  position: [DESK.centerX + DESK.depth / 2 + 0.28, DESK.height + 0.26, DESK.centerZ - 0.02],
+  face: [-1, -0.06, 0],
+};
+
 /** Sleeping spot: right above the pillow, settling down onto it. */
 export const SLEEP_SPOT = {
   position: [BED.pillowX - 0.02, BED.mattressTop + 0.20, BED.centerZ + 0.02],
