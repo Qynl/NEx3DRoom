@@ -26,7 +26,7 @@ export const TIME_OF_DAY = {
     skyIntensity: 1.35,
     poolColor: [1.0, 0.93, 0.78],
     poolAlpha: 0.30,
-    tint: [1, 1, 1],
+    tint: [1.03, 0.99, 0.94],
   },
   SUNSET: {
     sunDir: [0.62, 0.22, -0.76],

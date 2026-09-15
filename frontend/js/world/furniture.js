@@ -29,6 +29,7 @@ export function buildFurniture(builder, M) {
   buildBigPlant(builder, M);
   buildShelfDecor(builder, M, refs);
   buildWindowHerbs(builder, M);
+  buildCornerPlant(builder, M);
   buildContactShadows(builder, M);
   return refs;
 }
@@ -525,6 +526,42 @@ function buildWindowHerbs(builder, M) {
 }
 
 const WINDOW_SILL_Y = 0.82;
+
+/* --------------------------------------------------- corner plant (2nd) -- */
+
+function buildCornerPlant(builder, M) {
+  const x = -2.35, z = -1.7;
+  const potProfile = [
+    [0, 0], [0.12, 0], [0.13, 0.008], [0.17, 0.28], [0.18, 0.31], [0.172, 0.315],
+    [0.16, 0.285], [0.12, 0.01], [0, 0.01],
+  ];
+  builder.add(latheGeometry(potProfile, 22), T(x, 0, z), M.terracotta, { tag: 'plantPot2' });
+  builder.add(cylinderGeometry(0.155, 0.155, 0.016, 20), T(x, 0.29, z), M.soil, { tag: 'plantSoil2', castShadow: false });
+  const random = makeRandom(913);
+  const stems = [];
+  const leaves = [];
+  for (let i = 0; i < 9; i++) {
+    const yaw = (i / 9) * Math.PI * 2 + random() * 0.5;
+    const tilt = 0.3 + random() * 0.7;
+    const stemLen = 0.28 + random() * 0.3;
+    const leafLen = 0.16 + random() * 0.12;
+    const top = [
+      Math.sin(yaw) * Math.sin(tilt) * stemLen,
+      0.3 + Math.cos(tilt) * stemLen,
+      Math.cos(yaw) * Math.sin(tilt) * stemLen,
+    ];
+    stems.push(transformMesh(
+      cylinderGeometry(0.006, 0.009, stemLen, 6),
+      T(x + top[0] / 2, 0.3 + top[1] / 2 - 0.01, z + top[2] / 2, yaw, tilt, 0)
+    ));
+    leaves.push(transformMesh(
+      leafGeometry(leafLen, leafLen * 0.72, 0.4 + random() * 0.3, 6, 5),
+      T(x + top[0], 0.3 + top[1], z + top[2], yaw + Math.PI, tilt * 0.72, 0)
+    ));
+  }
+  builder.add(mergeMeshes(stems), I(), M.leafDeep, { tag: 'plantStems2', castShadow: false });
+  builder.add(mergeMeshes(leaves), I(), M.leaf, { tag: 'plantLeaves2' });
+}
 
 /* ------------------------------------------------------ contact shadows -- */
 

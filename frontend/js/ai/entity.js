@@ -103,7 +103,7 @@ export class AiEntity {
       clamp: true, mips: false, minFilter: renderer.gl.LINEAR,
     });
     this.faceScreen = add(
-      quadGeometry(0.26, 0.21),
+      quadGeometry(0.28, 0.22),
       {
         program: 'unlit', blend: 'alpha', texture: this.faceTexture,
         color: [1, 1, 1, 1], depthWrite: false, cull: false,
@@ -226,7 +226,7 @@ export class AiEntity {
     multiplyInto(this.shell.model, this.matrix, this.local);
     this.shell.material.emissiveStrength = this.expr.shell;
 
-    m4trs(this.local, [0, 0, 0.105], [0.86, 0.74, 0.52], 0, tilt * 0.7, sway * 0.7);
+    m4trs(this.local, [0, 0, 0.10], [0.95, 0.8, 0.55], 0, tilt * 0.7, sway * 0.7);
     multiplyInto(this.face.model, this.matrix, this.local);
     this.face.material.emissiveStrength = 0.2 + this.expr.glow * 0.1;
 
