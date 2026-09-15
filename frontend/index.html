@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>NEx3D Room</title>
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+
+<!-- ============================================================
+     The whole application is the 3D room. Everything below is a
+     thin, non-interactive layer of status on top of it.
+     ============================================================ -->
+<canvas id="scene" aria-label="3D room"></canvas>
+
+<!-- Very subtle presence mark. Fades away once the room is alive. -->
+<div id="presence" class="presence">
+  <span class="presence-dot"></span>
+  <span class="presence-name">NEx<em>3D</em></span>
+</div>
+
+<!-- Voice / status dock. No chat, no buttons, no text entry. -->
+<div id="dock" class="dock" data-state="IDLE">
+  <div class="mic" id="micRing" title="Microphone">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 3.5a2.6 2.6 0 0 1 2.6 2.6v5.1a2.6 2.6 0 0 1-5.2 0V6.1A2.6 2.6 0 0 1 12 3.5Z"/>
+      <path d="M5.9 11.1a1 1 0 0 1 2 0 4.1 4.1 0 0 0 8.2 0 1 1 0 1 1 2 0 6.1 6.1 0 0 1-5.1 6v1.9h2.2a1 1 0 1 1 0 2H8.8a1 1 0 1 1 0-2H11v-1.9a6.1 6.1 0 0 1-5.1-6Z"/>
+    </svg>
+    <span class="mic-pulse"></span>
+  </div>
+  <div class="levels" id="levels" aria-hidden="true">
+    <i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+  </div>
+  <div class="dock-text">
+    <span class="dock-label" id="dockLabel">waking up</span>
+    <span class="dock-sub" id="dockSub">centre of the room</span>
+  </div>
+</div>
+
+<!-- Connection toast, only shown when something is wrong. -->
+<div id="toast" class="toast" hidden>
+  <span class="toast-dot"></span><span id="toastText">reconnecting to the room…</span>
+</div>
+
+<!-- F1 developer overlay. Hidden by default. -->
+<div id="debug" class="debug" hidden>
+  <div class="debug-head">
+    <span>developer overlay</span>
+    <span class="debug-hint">F1 hide · R camera · 1/2/3 day·sunset·night</span>
+  </div>
+  <dl class="debug-grid" id="debugGrid"></dl>
+  <div class="debug-row" id="debugStates"></div>
+  <div class="debug-row" id="debugPlaces"></div>
+  <div class="debug-row" id="debugVoice"></div>
+  <div class="debug-row debug-log" id="debugLog"></div>
+</div>
+
+<!-- First-run loading veil -->
+<div id="loading" class="loading">
+  <div class="loading-ring"><span></span></div>
+  <div class="loading-text" id="loadingText">building the room…</div>
+</div>
+
+<noscript><div class="noscript">This application needs JavaScript enabled.</div></noscript>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

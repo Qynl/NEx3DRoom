@@ -1,0 +1,6 @@
+# Local, machine specific state - never part of the project.
+data/
+*.pyc
+__pycache__/
+.DS_Store
+Thumbs.db
